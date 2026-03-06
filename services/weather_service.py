@@ -1,40 +1,51 @@
-import os
-from urllib.parse import quote
-
 import requests
 
-# wttr.in provides a free, no-key-required JSON weather API
-WTTR_BASE = 'https://wttr.in'
+GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
+WEATHER_URL   = 'https://api.open-meteo.com/v1/forecast'
+
+WMO_DESCRIPTIONS = {
+    0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+    45: 'Fog', 48: 'Icy fog',
+    51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+    61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+    71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
+    80: 'Slight showers', 81: 'Moderate showers', 82: 'Violent showers',
+    95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Thunderstorm with heavy hail',
+}
 
 
 def get_weather(city: str) -> dict:
-    """
-    Return current weather data for *city* using the wttr.in JSON API.
-
-    Response fields
-    ───────────────
-    city, temperature_c, temperature_f, feels_like_c,
-    humidity, wind_speed_kmph, description
-    """
     try:
-        url = f'{WTTR_BASE}/{quote(city)}?format=j1'
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
+        geo = requests.get(GEOCODING_URL, params={'name': city, 'count': 1, 'language': 'en', 'format': 'json'}, timeout=10)
+        geo.raise_for_status()
+        results = geo.json().get('results')
+        if not results:
+            return {'error': f'City not found: {city}'}
 
-        current = data['current_condition'][0]
-        nearest_area = data.get('nearest_area', [{}])[0]
-        area_name = nearest_area.get('areaName', [{}])[0].get('value', city)
+        loc = results[0]
+        lat, lon = loc['latitude'], loc['longitude']
+        city_name = loc.get('name', city)
+        country   = loc.get('country', '')
+
+        wx = requests.get(WEATHER_URL, params={
+            'latitude': lat, 'longitude': lon,
+            'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code',
+            'wind_speed_unit': 'kmh',
+        }, timeout=10)
+        wx.raise_for_status()
+        current = wx.json()['current']
+        code = current.get('weather_code', 0)
 
         return {
-            'city': area_name,
+            'city': city_name,
+            'country': country,
             'query': city,
-            'temperature_c': int(current['temp_C']),
-            'temperature_f': int(current['temp_F']),
-            'feels_like_c': int(current['FeelsLikeC']),
-            'humidity_percent': int(current['humidity']),
-            'wind_speed_kmph': int(current['windspeedKmph']),
-            'description': current['weatherDesc'][0]['value'],
+            'temperature_c': round(current['temperature_2m'], 1),
+            'temperature_f': round(current['temperature_2m'] * 9 / 5 + 32, 1),
+            'feels_like_c': round(current['apparent_temperature'], 1),
+            'humidity_percent': current['relative_humidity_2m'],
+            'wind_speed_kmph': round(current['wind_speed_10m']),
+            'description': WMO_DESCRIPTIONS.get(code, f'Weather code {code}'),
         }
     except requests.exceptions.Timeout:
         return {'error': 'Weather service timed out'}
