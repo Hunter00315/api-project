@@ -1,0 +1,22 @@
+{
+  "slots": [
+    {"doctor": "Dr Smith",    "time": "09:00", "available": true},
+    {"doctor": "Dr Smith",    "time": "10:00", "available": true},
+    {"doctor": "Dr Smith",    "time": "11:00", "available": true},
+    {"doctor": "Dr Smith",    "time": "14:00", "available": true},
+    {"doctor": "Dr Smith",    "time": "15:00", "available": true},
+    {"doctor": "Dr Smith",    "time": "16:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "09:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "10:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "11:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "13:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "14:00", "available": true},
+    {"doctor": "Dr Jones",    "time": "16:00", "available": true},
+    {"doctor": "Dr Williams", "time": "09:30", "available": true},
+    {"doctor": "Dr Williams", "time": "10:30", "available": true},
+    {"doctor": "Dr Williams", "time": "11:30", "available": true},
+    {"doctor": "Dr Williams", "time": "13:00", "available": true},
+    {"doctor": "Dr Williams", "time": "14:30", "available": true},
+    {"doctor": "Dr Williams", "time": "15:30", "available": true}
+  ]
+}

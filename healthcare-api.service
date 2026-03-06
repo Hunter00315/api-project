@@ -1,0 +1,22 @@
+[Unit]
+Description=Healthcare Appointment API (Gunicorn)
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/api-project
+EnvironmentFile=/home/ec2-user/api-project/.env
+Environment="PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin"
+
+ExecStart=/home/ec2-user/.local/bin/gunicorn \
+    --workers 4 \
+    --bind 0.0.0.0:5000 \
+    --access-logfile /var/log/healthcare-api/access.log \
+    --error-logfile  /var/log/healthcare-api/error.log \
+    app:app
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
