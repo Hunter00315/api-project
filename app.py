@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from services.reservation_service import ReservationService
 from services.weather_service import get_weather
@@ -8,6 +9,7 @@ from services.aqi_service import get_aqi
 from services.health_service import calculate_health_metrics
 
 app = Flask(__name__)
+CORS(app)
 
 API_KEY = os.environ.get('API_KEY', 'healthcare-api-key-2024')
 
