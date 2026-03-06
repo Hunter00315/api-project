@@ -145,6 +145,20 @@ def aqi():
 
 
 # ---------------------------------------------------------------------------
+# Error handlers
+# ---------------------------------------------------------------------------
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.exception('Unhandled exception: %s', e)
+    return jsonify({'error': 'Internal server error', 'detail': str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == '__main__':

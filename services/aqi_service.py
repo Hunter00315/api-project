@@ -41,5 +41,5 @@ def get_aqi(city: str) -> dict:
         return {'error': 'AQI service timed out'}
     except requests.exceptions.RequestException as exc:
         return {'error': f'AQI service unavailable: {exc}'}
-    except (KeyError, ValueError) as exc:
+    except Exception as exc:
         return {'error': f'Failed to parse AQI data: {exc}'}
