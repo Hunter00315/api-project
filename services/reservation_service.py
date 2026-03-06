@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 
 
 class ReservationService:
@@ -89,7 +89,7 @@ class ReservationService:
             else:
                 response = self.table.scan()
             return [self._clean_item(i) for i in response.get('Items', [])]
-        except ClientError:
+        except (ClientError, BotoCoreError, Exception):
             return self._get_slots_json(doctor)
 
     def _reserve_slot_dynamodb(self, patient_name: str, doctor: str, time: str) -> dict:
@@ -166,7 +166,7 @@ class ReservationService:
                     FilterExpression=Attr('available').eq(False)
                 )
             return [self._clean_item(i) for i in response.get('Items', [])]
-        except ClientError:
+        except (ClientError, BotoCoreError, Exception):
             return self._get_reservations_json(doctor)
 
     # ------------------------------------------------------------------

@@ -14,6 +14,22 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
+
+def _load_env_file():
+    """Load .env key=value pairs into os.environ before boto3 is used."""
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if not os.path.exists(env_path):
+        return
+    with open(env_path) as fh:
+        for line in fh:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, _, v = line.partition('=')
+                os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_env_file()
+
 REGION     = os.environ.get('AWS_REGION',      'eu-north-1')
 TABLE_NAME = os.environ.get('DYNAMODB_TABLE',  'HealthcareSlots')
 QUEUE_NAME = os.environ.get('SQS_QUEUE_NAME',  'healthcare-reservations')
