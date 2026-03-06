@@ -9,6 +9,10 @@ HEALTH_API_URL = os.environ.get(
 
 REQUIRED_FIELDS = ['age', 'gender', 'weight', 'height', 'activity_level', 'goal']
 
+# Map frontend-friendly values to what the classmate API actually accepts
+GOAL_MAP = {'lose': 'cut', 'gain': 'bulk'}
+ACTIVITY_MAP = {'lightly_active': 'light', 'extra_active': 'very_active'}
+
 
 def calculate_health_metrics(payload: dict) -> dict:
     """
@@ -20,8 +24,12 @@ def calculate_health_metrics(payload: dict) -> dict:
     if missing:
         return {'error': f'Missing required fields: {", ".join(missing)}'}
 
+    normalized = dict(payload)
+    normalized['goal'] = GOAL_MAP.get(payload.get('goal', ''), payload.get('goal', ''))
+    normalized['activity_level'] = ACTIVITY_MAP.get(payload.get('activity_level', ''), payload.get('activity_level', ''))
+
     try:
-        response = requests.post(HEALTH_API_URL, json=payload, timeout=15)
+        response = requests.post(HEALTH_API_URL, json=normalized, timeout=15)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.Timeout:
