@@ -7,6 +7,11 @@ from services.reservation_service import ReservationService
 from services.weather_service import get_weather
 from services.aqi_service import get_aqi
 from services.health_service import calculate_health_metrics
+from services.image_validation_service import (
+    get_image_validation_health,
+    get_supported_formats,
+    validate_image,
+)
 
 app = Flask(__name__)
 CORS(app)
@@ -144,6 +149,62 @@ def aqi():
     if result.get('error'):
         return jsonify({'error': result['error']}), 502
     return jsonify(result), 200
+
+
+# ---------------------------------------------------------------------------
+# Image Format Validation API — proxy routes (classmate: Adharsh x24233510)
+# ---------------------------------------------------------------------------
+
+@app.route('/image-validation/health', methods=['GET'])
+def image_validation_health():
+    """Proxy health-check to the classmate Image Format Validation API."""
+    result = get_image_validation_health()
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 502
+    return jsonify(result), 200
+
+
+@app.route('/image-validation/formats', methods=['GET'])
+def image_validation_formats():
+    """Return the list of accepted medical imaging formats from the classmate API."""
+    result = get_supported_formats()
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 502
+    return jsonify(result), 200
+
+
+@app.route('/image-validation/validate', methods=['POST'])
+def image_validation_validate():
+    """
+    Accept a medical image upload, proxy it to the classmate validation API,
+    and return the validation result.
+
+    Expects multipart/form-data with a 'file' field.
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in request — send multipart/form-data with field name "file"'}), 400
+
+    uploaded = request.files['file']
+    if uploaded.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    # Sanitise the filename to prevent path traversal
+    filename = os.path.basename(uploaded.filename)
+
+    file_bytes = uploaded.read()
+    if len(file_bytes) == 0:
+        return jsonify({'error': 'Empty file uploaded'}), 400
+    if len(file_bytes) > 50 * 1024 * 1024:
+        return jsonify({'error': 'File exceeds 50 MB limit'}), 413
+
+    result = validate_image(file_bytes, filename, uploaded.content_type or 'application/octet-stream')
+
+    if result.get('error'):
+        return jsonify({'error': result['error']}), 502
+
+    # Strip internal bookkeeping key before returning
+    upstream_status = result.pop('_upstream_status', 200)
+    return jsonify(result), upstream_status
 
 
 # ---------------------------------------------------------------------------
